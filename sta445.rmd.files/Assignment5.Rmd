@@ -1,0 +1,184 @@
+---
+title: "Assigment5"
+author: "Matthew Heidenblut"
+date: "2026-10-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+```
+
+
+## Exercise 1 {-}
+
+Convert the following to date or date/time objects.
+
+**a)** September 13, 2010.
+
+```{r}
+mdy('September 13, 2010')
+
+```
+Converted the date into a date object but specified the order of month day year for my input. 
+
+**b)** Sept 13, 2010.
+
+```{r}
+# mdy('Sept 13, 2010' )
+```
+Using abbreviations with this function may only work when there are 3 letters and no more. 
+
+**c)** Sep 13, 2010.
+
+```{r}
+mdy('Sep 13, 2010')
+```
+The abbreviation must have been short enough for the mdy to recognize the month. 
+
+
+**d)** S 13, 2010. Comment on the month abbreviation needs.
+
+```{r}
+# mdy('S 13, 2010')
+```
+
+The abbreviation of the month is too ambiguious to be recognized as September. 
+
+**e)** 07-Dec-1941.
+
+```{r}
+dmy('07-Dec-1941')
+```
+The input date is the format of day month year which is why I used dmy. 
+
+
+**f)** 1-5-1998. Comment on why you might be wrong.
+
+```{r}
+# mdy(1-5-1998)
+```
+We are missing two digits in the input date so the month and date will not be recognized. I am not sure if 1 or 5 is day or month either. 
+
+
+**g)** 21-5-1998. Comment on why you know you are correct.
+
+```{r}
+dmy('21-5-1998')
+```
+This is correct because months can only go up to the digit 12 so it knows that 21 has to be the day. 
+
+**h)** 2020-May-5 10:30 am
+
+```{r}
+ymd_hm('2020-May-5 10:30 am')
+```
+Hour and minute is now needed.
+
+**i)** 2020-May-5 10:30 am PDT (ex Seattle)
+
+```{r}
+ymd_hm('2020-May-5 10:30 am' , tz='America/Los_Angeles')
+```
+The input time is in ymd with hour minute and LA time zone outputs PDT. 
+
+**j)** 2020-May-5 10:30 am AST (ex Puerto Rico)
+
+```{r}
+ymd_hm('2020-May-5 10:30 am' , tz='America/Puerto_Rico')
+```
+The input time is in ymd with hour minute and PR has its own time zone code. 
+
+
+
+### Exercise 3 {-}
+
+Suppose you have arranged for a phone call to be at 3 pm on May 8, 2025 at Arizona time. However, the recipient will be in Auckland, NZ. What time will it be there? 
+
+
+```{r}
+mdy_hm('May 8, 2025 3:00 pm', tz='US/Arizona' ) %>% with_tz(tzone='Pacific/Auckland')
+```
+Here I needed to start with the time zone I am in then pipe the correct timezone I want in order for the correct time math to be done. You cannot just change tz to the one you want because the will be the current time not the time difference. 
+
+
+
+## Exercise 4 {-}
+
+From this book's [GitHub](https://github.com/BuscagliaR/STA_444_v2/) directory, navigate to the `data-raw` directory and then download the `Pulliam_Airport_Weather_Station.csv` data file. (*There are several weather station files. Make sure you get the correct one!*)  There is a `DATE` column (is it of type `date` when you import the data?) as well as the Maximum and Minimum temperature. For the last 5 years of data included in the file, plot the time series of daily maximum temperature with date on the x-axis. Write your code so that it will work if I update the date set. *Hint: Find the maximum date in the data set and then subtract 5 years. Will there be a difference if you use `dyears(5)` vs `years(5)`? Which seems more appropriate here?*
+
+Plot time series of daily max temp from last 5 years.
+
+
+```{r}
+Pulliam_weather <- read.csv('Pulliam_Airport_Weather_Station.csv')
+
+Pulliam_weather <- Pulliam_weather %>% 
+  mutate(DATE = ymd(DATE))
+
+max.date <- max(Pulliam_weather$DATE) - years(5)
+
+Pulliam_weather.fil <- Pulliam_weather%>% 
+  filter(DATE>= max.date)
+
+ggplot(Pulliam_weather.fil, aes(x=DATE, y=TMAX)) + 
+  geom_point() +
+  aes(color=TMAX )
+
+
+
+```
+
+I first made sure the date was in the correct ymd format then found the max date to create the 5 year interval. From there I filtered the date for any date that greater than or equal to the minimum date of the 5 year interval I created and plotted based on temp. 
+
+## Exercise 5 {-}
+
+It turns out there is some interesting periodicity regarding the number of births on particular days of the year.
+
+**a)** Using the `mosaicData` package, load the data set `Births78` which records the number of children born on each day in the United States in 1978. Because this problem is intended to show how to calculate the information using the `date`, remove all the columns *except* `date` and `births`.
+
+
+```{r}
+library(mosaicData)
+data('Births78')
+
+births.trim <- Births78 %>%
+  select(date, births) %>%
+  mutate(date = ymd(date))
+
+
+```
+The Birth78 dataframe was selected for columns date and birth then date was turned into readable format of ymd.
+
+
+**b)** Graph the number of `births` vs the `date` with date on the x-axis. What stands out to you? Why do you think we have this trend?
+
+```{r}
+ggplot(births.trim, aes(x=date, y=births)) + 
+  geom_point()
+```
+What stands out is the max birth are in the late summer but also two very distinct curves of total births each day meaning there must be certain days more birth frequently occurred on. 
+
+
+**c)** To test your assumption, we need to figure out the what day of the week each observation is. Use `dplyr::mutate` to add a new column named `dow` that is the day of the week (Monday, Tuesday, etc). This calculation will involve some function in the `lubridate` package and the `date` column.
+
+```{r}
+births.trim<- births.trim %>% mutate(dow = wday(date, label=TRUE))
+```
+
+A new column was added for day of the week by mutating the df by taking the date column and asking for wday. 
+
+**d)** Plot the data with the point color being determined by the day of the week variable.
+
+
+```{r}
+ggplot(births.trim, aes(x=date, y=births)) + 
+  geom_point() + 
+  aes(color=dow)
+```
+
+The plot is now shown with data points associated with each day of the week with their own colors. 
+

@@ -1,0 +1,188 @@
+---
+title: "Assignment6"
+author: "Matthew Heidenblut"
+date: "2026-10-28"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyr)     # for the gather/spread commands
+library(dplyr)     # for the join stuff
+library(tidyverse) # dplyr, tidyr, ggplot2, etc.
+```
+
+
+
+
+## Exercise 1 {-}
+
+A common task is to take a set of data that has multiple categorical variables and create a table of the number of cases for each combination. An introductory statistics textbook contains a data set summarizing student surveys from several sections of an intro class. The two variables of interest are `Gender` and `Year` which are the students gender and year in college. *Note: you will need to refer to Chapter 4 and Chapter 7 for some of the operations needed below - this is a great time to review chapter 4!*
+
+**a)** Download the data set using the following:
+
+```{r}
+Survey <- read.csv('https://www.lock5stat.com/datasets2e/StudentSurvey.csv', na.strings=c('',' ')) 
+```
+
+**b)** Select the specific columns of interest **Year** and **Gender**
+
+```{r}
+survey.trim <- Survey %>% 
+  select(Year, Gender)
+
+head(survey.trim)
+```
+
+Selecting only year and gender from the survey. 
+
+
+**c)** Convert the **Year** column to factors and properly order the factors based on common US progression (FirstYear - Sophomore - Junior - Senior)
+
+
+```{r}
+survey.trim <- survey.trim %>% 
+  mutate(Year= factor(Year))
+
+survey.trim <- survey.trim %>%  
+  mutate(Year= fct_relevel(Year, 'FirstYear' , 'Sophomore', 'Junior', 'Senior'))
+ 
+head (survey.trim) 
+```
+
+Making year into a factor then making into levels in order of Firstyear, sophomore, junior, senior. 
+
+
+**d)** Convert the **Gender** column to factors and rename them Male/Female.
+
+
+```{r}
+survey.trim <- survey.trim %>%
+  mutate(Gender = factor (Gender))
+
+survey.trim <- survey.trim %>%
+  mutate(Gender = fct_recode(Gender, 'Male'= 'M' , 'Female' = 'F'))
+
+head(survey.trim)
+```
+
+Making gender into factor then recoding it to say the full word. 
+
+
+**e)** Produce a data set with eight rows and three columns that contains the number of responses for each gender:year combination. *You might want to look at the following functions: `dplyr::count` and `dplyr::drop_na`.*
+
+
+```{r}
+survey.combo <- count(survey.trim, Gender, Year ) %>% drop_na(Year)
+
+survey.combo
+```
+
+Counting the times male and female show up per year level and getting rid of any na in year column. 
+
+
+**f)** Pivot the table in part (e) to produce a table of the number of responses in the following form:
+        
+|   Gender    |  First Year  |  Sophomore  |  Junior   |  Senior   |
+|:-----------:|:------------:|:----------:|:---------:|:---------:|
+|  **Female** |              |            |           |           |  
+|  **Male**   |              |            |           |           | 
+    
+
+
+
+```{r}
+survey.pivot<- survey.combo %>% 
+  pivot_wider(names_from = Year, values_from=n)
+
+survey.pivot 
+```
+
+Originally a long table, pivoting to a wide table defining values and names. 
+
+## Exercise 3 {-} 
+
+For this problem we will consider two simple data sets.
+
+```{r}
+A <- tribble(
+  ~Name, ~Car,
+  'Alice', 'Ford F150',
+  'Bob',   'Tesla Model III',
+  'Charlie', 'VW Bug')
+
+B <- tribble(
+  ~First.Name, ~Pet,
+  'Bob',  'Cat',
+  'Charlie', 'Dog',
+  'Alice', 'Rabbit')
+```
+
+**a)** Combine the data frames together to generate a data set with three rows and three columns using `join` commands. 
+
+```{r}
+ab.join <- right_join(A,B, by=c('Name'='First.Name'))
+
+ab.join
+```
+
+Right joining a and b by common variable of name but specifying that similar columns equal eachother even though they have different labels.
+
+**b)** It turns out that Alice also has a pet guinea pig. Add another row to the `B` data set. Do this using either the base function `rbind`, or either of the `dplyr` functions `add_row` or `bind_rows`.
+
+```{r}
+B.guinea<- add_row(B, First.Name= 'Alice', Pet= 'Guinea Pig' )
+
+B.guinea
+```
+
+Adding a row for alices other pet.
+
+**c)** Combine again the `A` and `B` data sets together to generate a data set with four rows and three columns using `join` commands.
+
+```{r}
+ab.join.guinea <- left_join(A,B.guinea, by=c('Name'='First.Name'))
+
+ab.join.guinea
+```
+
+Re joing the tables since another row was added in B
+
+
+*Note: You may want to also try using `cbind` to address questions (a) and (c). Leave this as a challenge question and focus on the easier to use `join` functions introduced in this chapter.*
+
+
+## Exercise 4 {-} 
+
+The package `nycflights13` contains information about all the flights that arrived in or left from New York City in 2013. This package contains five data tables, but there are three data tables we will work with. The data table `flights` gives information about a particular flight, `airports` gives information about a particular airport, and `airlines` gives information about each airline. Create a table of all the flights on February 14th by Virgin America that has columns for the carrier, destination, departure time, and flight duration. Join this table with the airports information for the destination. Notice that because the column for the destination airport code doesn't match up between `flights` and `airports`, you'll have to use the `by=c("TableA.Col"="TableB.Col")` argument where you insert the correct names for `TableA.Col` and `TableB.Col`.
+
+
+#flights on Feb 14th by Virgin America w/ columns carrier, destination(long hand), departure time, flight duration 
+```{r}
+library(nycflights13)
+flights.date <- flights %>% 
+  filter(month==2 & day==14, carrier=='VX') 
+
+
+flights.join <- left_join(flights.date,airports, by=c('dest'='faa'))
+
+flights.join <- flights.join%>%
+ select(dep_time,name,air_time,carrier)%>%
+  rename(destination=name)
+
+
+flights.join
+
+```
+
+
+First, filtering for Feb 14 and Virgin America flights. Left joining flights and airports by making the destination = faa. Then selecting columns dep_time, name(destination), air_time, carrier and then I renamed the name column to destination. 
+
+
+
+
+
+
+
+

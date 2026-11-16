@@ -1,0 +1,99 @@
+---
+title: "Assignment7"
+author: "Matthew Heidenblut"
+date: "2026-11-06"
+output: pdf_document
+---
+
+```{rsetup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)   # loading ggplot2 and dplyr
+library(viridis)     # The viridis color schemes
+library(plotly)
+library(cowplot)
+library(ggplot2)
+data(trees)
+```
+
+## Exercise 2 {-}
+
+Using the `datasets::trees` data, complete the following. This question refreshes create a linear model, graphing the linear model, and introduces using some LaTeX expressions on the graph.
+
+**a)** Create a regression model for $y=$ `Volume` as a function of $x=$ `Height`.
+
+```{r}
+regression.trees <- lm(Height ~ Volume, data=trees )
+
+```
+
+
+**b)** Display the `summary` of the  model to view the y-intercept and slope of the regression line.
+
+```{r}
+summary(regression.trees)
+```
+
+
+**c)** Using `ggplot2`, create a scatter plot of Volume vs Height. 
+
+```{r}
+ggplot(trees, aes(x=Height,y=Volume)) + 
+  geom_point()
+```
+
+
+**d)** Color the scatter using the `Girth` variable.
+
+```{r}
+trees.p <- ggplot(trees, aes(x=Height,y=Volume)) + 
+  geom_point() +
+  aes(color=Girth)
+
+trees.p
+```
+
+
+
+**e)** Modify the color scheme using a RColorBrewer palette.
+
+```{r}
+library(viridis)
+library(cowplot)
+
+ plot_grid(trees.p + scale_color_viridis_c(option='viridis'))
+```
+
+
+**f)** Create a nice white filled rectangle to add text information. The following might be useful.
+
+```{r}
+trees.p + annotate('rect', xmin=65, xmax=75, ymin=60, ymax=74,
+         fill='white', color='black' )
+
+```
+
+**g)** Use the `broom` package to extract the coefficients of the best-fit line. Add this information as an annotation to the graph, which should follow a form that looks like $\hat{y}_i = (INTERCEPT) + (SLOPE)* x_i$. Place the annotation within the white text box.
+
+```{r}
+broom::tidy(regression.trees)
+```
+
+
+**h)** Use the `broom` package to extract the coefficient of determination $r^2$ from the model. Add the annotation to your graph, which should look something like $R^2 = (VALUE)$
+
+**i)** Add the regression line in red. There are several ways to do this.
+
+**j)** Properly label the axes of the graph.
+
+**k)** Add a descriptive title to the graph.
+
+
+
+
+
+
+
+
+
+
+
